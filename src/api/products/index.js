@@ -155,17 +155,99 @@ productRouter.post(
 );
 
 productRouter.post("/:productId/reviews", async (req, res, next) => {
-  const newReview = {
-    ...req.body,
-    _id: uniqid(),
-    productId: req.params.productId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  const reviewsArray = await getReviews();
-  reviewsArray.push(newReview);
-  await writeReviews(reviewsArray);
-  res.status(201).send({ _id: newReview._id });
+  try {
+    const newReview = {
+      ...req.body,
+      _id: uniqid(),
+      productId: req.params.productId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const reviewsArray = await getReviews();
+    reviewsArray.push(newReview);
+    await writeReviews(reviewsArray);
+    res.status(201).send({ _id: newReview._id });
+  } catch (error) {
+    next(error);
+  }
 });
+
+productRouter.get("/:productId/reviews", async (req, res, next) => {
+  try {
+    const reviews = await getReviews();
+    res.send(reviews);
+  } catch (error) {
+    next(error);
+  }
+});
+
+productRouter.get("/:productId/reviews/:reviewId", async (req, res, next) => {
+  try {
+    const reviewsArray = await getReviews();
+    const foundReview = reviewsArray.find(
+      (review) => review._id === req.params.reviewId
+    );
+    if (foundReview) {
+      res.send(foundReview);
+    } else {
+      next(
+        createHttpError(404, `Review with id ${req.params.reviewId} not found`)
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+productRouter.put("/:productId/reviews/:reviewId", async (req, res, next) => {
+  try {
+    const reviewsArray = await getReviews();
+    const index = reviewsArray.findIndex(
+      (review) => review._id === req.params.reviewId
+    );
+    if (index !== -1) {
+      const oldReview = reviewsArray[index];
+      const updatedReview = {
+        ...oldReview,
+        ...req.body,
+        updatedAt: new Date(),
+      };
+      reviewsArray[index] = updatedReview;
+      await writeReviews(reviewsArray);
+      res.send(updatedReview);
+    } else {
+      next(
+        createHttpError(404, `Review with id ${req.params.reviewId} not found`)
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+productRouter.delete(
+  "/:productId/reviews/:reviewId",
+  async (req, res, next) => {
+    try {
+      const reviewsArray = await getReviews();
+      const remainingReviews = reviewsArray.filter(
+        (review) => review._id !== req.params.reviewId
+      );
+      if (reviewsArray.length !== remainingReviews.length) {
+        await writeReviews(remainingReviews);
+        res.status(204).send();
+      } else {
+        next(
+          createHttpError(
+            404,
+            `Review with id ${req.params.reviewId} not found`
+          )
+        );
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default productRouter;
