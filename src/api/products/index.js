@@ -184,7 +184,18 @@ productRouter.post(
 productRouter.get("/:productId/reviews", async (req, res, next) => {
   try {
     const reviews = await getReviews();
-    res.send(reviews);
+    const currentId = reviews.some(
+      (review) => review.productId === req.params.productId
+    );
+    if (currentId) {
+      res.send(reviews);
+    } else {
+      next(
+        createHttpError(404, {
+          message: `Review with id ${req.params.productId} does not exist!`,
+        })
+      );
+    }
   } catch (error) {
     next(error);
   }
