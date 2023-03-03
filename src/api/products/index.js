@@ -8,25 +8,31 @@ import uniqid from "uniqid";
 import createHttpError from "http-errors";
 import multer from "multer";
 import { extname } from "path";
+import { checkProductSchema, triggerBadRequest } from "./validation.js";
 
 const productRouter = Express.Router();
 
-productRouter.post("/", async (req, res, next) => {
-  try {
-    const newProducts = {
-      ...req.body,
-      _id: uniqid(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    const productsArray = await getProducts();
-    productsArray.push(newProducts);
-    await writeProducts(productsArray);
-    res.status(201).send({ _id: newProducts._id });
-  } catch (error) {
-    next(error);
+productRouter.post(
+  "/",
+  checkProductSchema,
+  triggerBadRequest,
+  async (req, res, next) => {
+    try {
+      const newProducts = {
+        ...req.body,
+        _id: uniqid(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const productsArray = await getProducts();
+      productsArray.push(newProducts);
+      await writeProducts(productsArray);
+      res.status(201).send({ _id: newProducts._id });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 productRouter.get("/", async (req, res, next) => {
   try {
     const products = await getProducts();
