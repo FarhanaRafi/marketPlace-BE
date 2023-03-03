@@ -10,7 +10,11 @@ import uniqid from "uniqid";
 import createHttpError from "http-errors";
 import multer from "multer";
 import { extname } from "path";
-import { checkProductSchema, triggerBadRequest } from "./validation.js";
+import {
+  checkProductSchema,
+  checkReviewSchema,
+  triggerBadRequest,
+} from "./validation.js";
 
 const productRouter = Express.Router();
 
@@ -154,23 +158,28 @@ productRouter.post(
   }
 );
 
-productRouter.post("/:productId/reviews", async (req, res, next) => {
-  try {
-    const newReview = {
-      ...req.body,
-      _id: uniqid(),
-      productId: req.params.productId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    const reviewsArray = await getReviews();
-    reviewsArray.push(newReview);
-    await writeReviews(reviewsArray);
-    res.status(201).send({ _id: newReview._id });
-  } catch (error) {
-    next(error);
+productRouter.post(
+  "/:productId/reviews",
+  checkReviewSchema,
+  triggerBadRequest,
+  async (req, res, next) => {
+    try {
+      const newReview = {
+        ...req.body,
+        _id: uniqid(),
+        productId: req.params.productId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const reviewsArray = await getReviews();
+      reviewsArray.push(newReview);
+      await writeReviews(reviewsArray);
+      res.status(201).send({ _id: newReview._id });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 productRouter.get("/:productId/reviews", async (req, res, next) => {
   try {

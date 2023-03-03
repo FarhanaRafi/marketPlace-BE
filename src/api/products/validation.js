@@ -34,7 +34,23 @@ const productsSchema = {
   },
 };
 
+const reviewsSchema = {
+  comment: {
+    in: ["body"],
+    isString: {
+      errorMessage: "Comment is a mandatory and needs to be in string",
+    },
+  },
+  rate: {
+    in: ["body"],
+    isNumeric: {
+      errorMessage: "Rate is a mandatory and needs to be in Number",
+    },
+  },
+};
+
 export const checkProductSchema = checkSchema(productsSchema);
+export const checkReviewSchema = checkSchema(reviewsSchema);
 
 export const triggerBadRequest = (req, res, next) => {
   const errors = validationResult(req);
