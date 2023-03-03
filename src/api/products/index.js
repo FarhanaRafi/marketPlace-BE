@@ -3,6 +3,8 @@ import {
   getProducts,
   saveProductCover,
   writeProducts,
+  getReviews,
+  writeReviews,
 } from "../../lib/fs-tool.js";
 import uniqid from "uniqid";
 import createHttpError from "http-errors";
@@ -33,6 +35,7 @@ productRouter.post(
     }
   }
 );
+
 productRouter.get("/", async (req, res, next) => {
   try {
     const products = await getProducts();
@@ -49,6 +52,7 @@ productRouter.get("/", async (req, res, next) => {
     next(error);
   }
 });
+
 productRouter.get("/:productId", async (req, res, next) => {
   try {
     const productsArray = await getProducts();
@@ -69,6 +73,7 @@ productRouter.get("/:productId", async (req, res, next) => {
     next(error);
   }
 });
+
 productRouter.put("/:productId", async (req, res, next) => {
   try {
     const productsArray = await getProducts();
@@ -97,6 +102,7 @@ productRouter.put("/:productId", async (req, res, next) => {
     next(error);
   }
 });
+
 productRouter.delete("/:productId", async (req, res, next) => {
   try {
     const productsArray = await getProducts();
@@ -147,5 +153,19 @@ productRouter.post(
     }
   }
 );
+
+productRouter.post("/:productId/reviews", async (req, res, next) => {
+  const newReview = {
+    ...req.body,
+    _id: uniqid(),
+    productId: req.params.productId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  const reviewsArray = await getReviews();
+  reviewsArray.push(newReview);
+  await writeReviews(reviewsArray);
+  res.status(201).send({ _id: newReview._id });
+});
 
 export default productRouter;
